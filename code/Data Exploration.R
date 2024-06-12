@@ -6,10 +6,10 @@
 library(dplyr); library(tidyr); library(ggplot2); library(forcats); library(googlesheets4); 
 library(geodata); library(tidyterra); library(terra); library(viridis); library(purrr)
 
-#df <- read_sheet("https://docs.google.com/spreadsheets/d/1gNnNZoWQGrJ7eYfwNEtOdLUDLbpVsUO8eA4pgtiVdYY")
-df <- read.csv("input/data.csv") %>% 
-  mutate(collection_decimal_latitude = as.numeric(collection_decimal_latitude), 
-         ratio = X87Sr_86Sr)
+#df <- read_sheet("https://docs.google.com/spreadsheets/d/1zEkz_KKvY1ek7ejBohuy7ZazTrOwHazpraRPD6lCtZY")
+ df <- read.csv("input/data.csv") %>% 
+   mutate(collection_decimal_latitude = as.numeric(collection_decimal_latitude), 
+          ratio = X87Sr_86Sr)
 
 # let's simplify some naming schema and classifications
 df <- df %>% 
@@ -165,7 +165,7 @@ df %>%
   #geom_density(fill = 'midnightblue', alpha = 0.6) +
   labs(x = expression(paste(""^{87},"Sr/"^86,"Sr")), 
        y = "Count") +
-  #xlim(0.7, 0.85) + 
+  xlim(0.7, 0.85) + 
   theme_classic()
 
 ggplot() +
@@ -207,3 +207,26 @@ dois <- dplyr::distinct(df, related_publication_id)
 refs <- dplyr::distinct(df, related_publication_citation)
 write.csv(file = 'output/dois.csv', dois) #easily save the reference dois
 write.csv(file = 'output/refs.csv', refs) #easily save the reference list
+
+# Check PACHAMAMA for Sr --------------------------------------------------
+
+test <- read_delim("input/saaid_v.2.0_2023_humans.csv", 
+        delim = ";", escape_double = FALSE, trim_ws = TRUE)
+
+test <- test %>% rename(ratio = '87Sr/86Sr') %>%
+  filter(!is.na(ratio)) %>% 
+  select(Entry, Country, Site_Name, Sample_Id, ratio, Original_Full_Reference, Link_to_source)
+
+check <- dplyr::distinct(test, Original_Full_Reference)
+write.csv(file = 'output/checkhumans.csv', check)
+
+
+plants <- read_delim("input/saaid_v.2.0_2023_plants.csv", 
+                   delim = ";", escape_double = FALSE, trim_ws = TRUE)
+
+plants <- plants %>% rename(ratio = '87Sr/86Sr') %>%
+  filter(!is.na(ratio)) %>% 
+  select(Entry, Country, Site_Name, Sample_Id, ratio, Original_Full_Reference)
+
+check <- dplyr::distinct(plants, Original_Full_Reference)
+write.csv(file = 'output/checkplants.csv', check)
