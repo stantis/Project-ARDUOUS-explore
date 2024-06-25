@@ -6,8 +6,13 @@
 library(dplyr); library(tidyr); library(ggplot2); library(forcats); library(googlesheets4); 
 library(geodata); library(tidyterra); library(terra); library(viridis); library(purrr)
 
-#df <- read_sheet("https://docs.google.com/spreadsheets/d/1zEkz_KKvY1ek7ejBohuy7ZazTrOwHazpraRPD6lCtZY")
- df <- read.csv("input/data.csv") %>% 
+# the 'read_sheet' function is actually kind of terrible for a lot of things, mostly 
+# it converts a lot of variables to lists and I don't have the patience to name every column variable. 
+# but it's down and dirty and works for some things. 
+df <- read_sheet("https://docs.google.com/spreadsheets/d/1zEkz_KKvY1ek7ejBohuy7ZazTrOwHazpraRPD6lCtZY")
+
+# otherwise, download ARDUOUS as .csv and put in input folder. 
+df <- read.csv("input/data.csv") %>% 
    mutate(collection_decimal_latitude = as.numeric(collection_decimal_latitude), 
           ratio = X87Sr_86Sr)
 
@@ -105,21 +110,23 @@ animaldf %>%
 
 table(animaldf$scientific_name)
 
-plant <- c("Abies", "Acacia", "Abutilon", "Acanthus", "Acca sellowiana", "Acer", 
-           "Adesmia", "Aegopodium", "Aesculus", "Agathis", "Agave")
-
-# stopped at letter N
+# finished letter P, anto R
 # migratory or home ranges 100+ across
 large <- c("Acrocephalus schoenobaenus", "Antilocapra americana", "Canis lupus", 
            "Cervus canadensis", "Cervus elaphus", "Cervus elaphus L.", "Ctenopharyngodon idella", 
            "Alosa sapidissima", "Calidris alpina", "Damaliscus pygargus", "Dendroica caerulescens", 
            "Elephantidae", "Esox", "Esox lucius", "Gazella subgutturosa", "Haematopus", 
-           "Kobus kob", "Lota lota", "Mammuthus", 
+           "Kobus kob", "Lota lota", "Mammuthus", "Numenius", "Numenius phaeopus", 
+           "Odocoileus", "Odocoileus virginianus", "Oncorhynchus tshawytscha", 
+           "Pluvialis apricaria", "Puma", "Rangifer", "Rangifer tarandus", 
+           "Salminus brasiliensis", "Salmo salar", "Sander lucioperca", "Sander vitreus", 
+           "Setophaga caerulescens", "Syncerus caffer caffer", "Tachycineta bicolor", 
+           "Tringa totanus", "Vanellinae"
 )
 
 # migratory or home ranges between 6-99 km across
 medium <- c("Aepyceros melampus", "Alligator sinensis", "Antidorcas marsupialis",
-            "Archaeolemur", "Archaeolemur edwardsi", "Archaeolemur majori", "Arianta Arbustorum", 
+            "Archaeolemur", "Archaeolemur edwardsi", "Archaeolemur majori", "Arianta arbustorum", 
             "Avahi laniger", "Babakotia radofilai", "Bison", "Bison bison", "Bos", 
             "Bos taurus", "Bos taurus L.", "Bovidae", "Caiman yacare", "Capra",
             "Capra aegagrus hircus", "Capreolus", "Capreolus capreolus", "Capreolus capreolus L.", 
@@ -131,15 +138,23 @@ medium <- c("Aepyceros melampus", "Alligator sinensis", "Antidorcas marsupialis"
             "Felis", "Hexaprotodon guldbergi", "Hippopotamus lemerlei", "Hippotragus niger", 
             "Iguanidae", "Lagomorpha", "Lama vicugna", "Lemur catta", "Leopardus sp.", 
             "Leopardus wiedii", "Lepilemur", "Lepilemur petteri", "Leporidae", "Lepus", 
-            "Lepus americanus", " Lepus saxatilis", "Lomo guanicoe", "M. agilis", 
+            "Lepus americanus", "Lepus saxatilis", "Lomo guanicoe", "M. agilis", 
             "M. giganteus", "M. piceus", "M. rufus", "Martes martes L.", "Megaladapis madagascariensis", 
             "Meleagris gallopavo", "Microcebus griseorufus", "Micropterus dolomieu", 
             "Micropterus salmoides", "Mustela frenata", "Mustelidae", "Myocastor coipus", 
-            
+            "Oreochromis niloticus", "Ovis", "Ovis aries L.", "Pan troglodytes", 
+            "Panthera leo", "Papio", "Papio anubis", "Papio ursinus", "Pecari tajacu", 
+            "Phacochoerus africanus", "Phascolarctos cinereus", "Pomoxis nigromaculatus", 
+            "Procyon lotor", "Propithecus coquereli", "Propithecus verreauxi", 
+            "Raphicerus campestris", "Redunca arundinum", "Castor fiber L", 
+            "Scolopacidae", "Serpentes", "Sylvicapra grimmia", "Sylvilagus", 
+            "Sylvilagus cunicularius", "Tapirella bairdii", "Tapiridae", "Tapirus terrestris", 
+            "Tayassu pecari", "Tayassuidae", "Tragelaphus scriptus", "Vulpes", "Vulpes vulpes", 
+            "Vulpes vulpes L."
 )
 
-# small home ranges, 5km or less
-small <- c("Arvicola terrestris L", "Bivalvia", "Blattodea", "Bufonidae", "Bulimulidae", 
+# small home ranges/migration patterns, 5km^2 or less
+small <- c("Arvicola terrestris L.", "Bivalvia", "Blattodea", "Bufonidae", "Bulimulidae", 
            "Cavia", "Cavia porcellus", "Cepaea hortensis", "Cepaea nemoralis", "Chilostoma sp.",  
            "Clausiliidae", "Corbicula sp.", "Cornu aspersum", "Cricetidae", "Cryptomys hottentotus", 
            "Ctenomys sp.", "Arvicolinae", "Eligmodontia sp.", "Eliurus majori", 
@@ -147,11 +162,36 @@ small <- c("Arvicola terrestris L", "Bivalvia", "Blattodea", "Bufonidae", "Bulim
            "Geomyidae", "Geomys bursarius", "Gerbilliscus brantsii", "Gyraulus convexiusculus", 
            "Helix aspersa", "Helix pomatia", "Helix sp.", "Marmota xaviventris", 
            "Meriones sp.", "Micaelamyus namaquensis", "Microtus arvalis/agrestis", 
-           "Mollusca", "Mus", "Mus musculus", 
-           
+           "Mollusca", "Mus", "Mus musculus", "Neocyclotus dysoni", "Nesokia indica",
+           "Octodon sp.", "Ondatra zibethicus", "Orthalicus princeps", "Orthogeomys hispidus", 
+           "Orycteropus afer", "Oryctolagus", "Oryctolagus cuniculus", "Oryctolagus sp.", 
+           "Ostrea sp.", "Otocyon megalotis", "Otomys irroratus", "Otomys unisulcatus", 
+           "Pachychilus sp.", "Pectinidae", "Pedetes capensis", "Perforatella incarnata",
+           "Philander opossum", "Phyllotis sp.", "Pomacea flagellata", "Pomatias elegans", 
+           "Procavia capensis", "Pronolagys rupestris", "Psammobates geometricus", 
+           "Pupillidae", "Radix xauricularia", "Rhabdomys pumilio", "Sciuridae", 
+           "Sigmodon hispidus", "Soricidae", "Spalax ehrenbergi", "Suncus murinus",
+           "Talpa sp.", "Tatera indica", "Tenrecidae", "Thomomys talpoides", "Trichia", 
+           "Trochoidea hoggarensis", "Xerotricha hoggarensis", "Xerus inauris", 
+           "Zaedyus pichiy", "Zootelcus insularis"
 )
 
-# Data Visualization ------------------------------------------------------
+# Some things I'm ignoring because they're too tied with humans: Canis lupus familiaris, Rattus rattus,
+# Ovis/Capris/Ares genus (if generic and not a specific wild species), Sus
+# really generic families/orders are also left off (e.g., Reptilia, Rhicocerotidae)
+
+df <- df %>% 
+  mutate(migration = case_when(
+    scientific_name %in% large ~ 'large', 
+    scientific_name %in% medium ~ 'medium', 
+    scientific_name %in% small ~ 'small'))
+
+migration_list <- as.data.frame(c(large, medium, small)) %>% 
+  rename(scientific_name = 'c(large, medium, small)')
+
+missing_names <- anti_join(migration_list, animaldf)
+# Data Visualization ------------------------
+------------------------------
 
 df %>%
   ggplot(aes(x = fct_infreq(material_type_group))) +
