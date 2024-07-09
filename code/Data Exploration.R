@@ -11,8 +11,8 @@ library(geodata); library(tidyterra); library(terra); library(viridis); library(
 # but it's down and dirty and works for some things. 
 df <- read_sheet("https://docs.google.com/spreadsheets/d/10V-2mtjM0moRoU5ITHBs-579cxMPUL1nJbK2O3AIWhA")
 
-# otherwise, download ARDUOUS as .csv and put in input folder. 
-df <- read.csv("input/data.csv") %>% 
+# otherwise, download ARDUOUS as .csv and put in input folder. NOT CURRENT
+df <- read.csv("input/ProjectARDUOUS090724.csv") %>% 
    mutate(collection_decimal_latitude = as.numeric(collection_decimal_latitude), 
           ratio = X87Sr_86Sr)
 
@@ -108,11 +108,11 @@ animaldf %>%
   labs(x = "group") + 
   theme_classic()
 
-table(animaldf$scientific_name)
-
 # migratory or home ranges 100+ across
-large <- c("Acrocephalus schoenobaenus", "Antilocapra americana", "Canis lupus", 
-           "Cervus canadensis", "Cervus elaphus", "Cervus elaphus L.", "Ctenopharyngodon idella", 
+large <- c("Acrocephalus schoenobaenus", "Alces alces", "Antilocapra americana", 
+           "Bison", "Bison bison", "Canis lupus", 
+           "Cervus", "Cervus canadensis", "Cervus elaphus", "Cervus elaphus L.", 
+           "Charadrius hiaticula", "Ctenopharyngodon idella", 
            "Alosa sapidissima", "Calidris alpina", "Damaliscus pygargus", "Dendroica caerulescens", 
            "Elephantidae", "Esox", "Esox lucius", "Gazella subgutturosa", "Haematopus", 
            "Kobus kob", "Lota lota", "Mammuthus", "Numenius", "Numenius phaeopus", 
@@ -124,13 +124,15 @@ large <- c("Acrocephalus schoenobaenus", "Antilocapra americana", "Canis lupus",
 )
 
 # migratory or home ranges between 6-99 km across
-medium <- c("Aepyceros melampus", "Alligator sinensis", "Antidorcas marsupialis",
+medium <- c("Aepyceros melampus", "Alligator sinensis", "Antidorcas marsupialis", "Aplodinotus grunniens",
+            "Arapaima spp",
             "Archaeolemur", "Archaeolemur edwardsi", "Archaeolemur majori", "Arianta arbustorum", 
-            "Avahi laniger", "Babakotia radofilai", "Bison", "Bison bison", "Bos", 
+            "Avahi laniger", "Babakotia radofilai", "Bos", 
             "Bos taurus", "Bos taurus L.", "Bovidae", "Caiman yacare", "Capra",
             "Capra aegagrus hircus", "Capreolus", "Capreolus capreolus", "Capreolus capreolus L.", 
             "Caprinae", "Caprini", "Castor canadensis", "Cathartidae", "Cervidae", 
-            "Cercopithecus ascanius", "Cheirogaleus crossleyi", "Cingulata", "Crocuta crocuta", 
+            "Cercopithecus ascanius", "Cercopithecus mitis", "Cheirogaleus crossleyi", 
+            "Cingulata", "Crocuta crocuta", "Cuniculus", "Cuniculus paca",
             "Cynomys", "Atherinosoma microstoma", "Brachyplatystoma rousseauxii",
             "Cerdocyon thous", "Cyprinus carpio", "Dasypodidae sp.", "Diceros bicornis", 
             "Dicotyles tajacu", "Equidae", "Eulemur rubriventer", "Eulemur rufifrons", 
@@ -153,9 +155,12 @@ medium <- c("Aepyceros melampus", "Alligator sinensis", "Antidorcas marsupialis"
 )
 
 # small home ranges/migration patterns, 5km^2 or less
-small <- c("Arvicola terrestris L.", "Bivalvia", "Blattodea", "Bufonidae", "Bulimulidae", 
+small <- c("Acomys cahirinus ", "Akodon sp.", "Anomalocardia brasiliana", "Anthozoa",
+          "Anura", "Apodemus flavicollis", "Arvicola amphibius", "Arvicola terrestris", "Bivalvia", 
+          "Blattodea", "Bufo", "Bufonidae", "Bulimulidae", 
            "Cavia", "Cavia porcellus", "Cepaea hortensis", "Cepaea nemoralis", "Chilostoma sp.",  
-           "Clausiliidae", "Cornu aspersum", "Cricetidae", "Cryptomys hottentotus", 
+           "Clausiliidae", "Corbicula sp.", "Cornu aspersum", "Cricetidae", "Crocidura", 
+          "Crocidura flavescens deltae", "Cryptomys hottentotus", 
            "Ctenomys sp.", "Arvicolinae", "Eligmodontia sp.", "Eliurus majori", 
            "Eliurus minor", "Erinaceus europ.", "Fruticicolidae", "Galea sp.", "Gastropoda", 
            "Geomyidae", "Geomys bursarius", "Gerbilliscus brantsii", "Gyraulus convexiusculus", 
@@ -193,9 +198,9 @@ migration_list <- as.data.frame(c(large, medium, small)) %>%
 
 missing_names <- anti_join(animaldf, migration_list) %>% 
   filter(!is.na(scientific_name))
-table(missing_names$scientific_name) # little bit more work to do with new additions
+table(missing_names$scientific_name) # little bit more work to do with new additions, On letter 'D' now
 # Data Visualization ------------------------
-------------------------------
+
 
 df %>%
   ggplot(aes(x = fct_infreq(material_type_group))) +
