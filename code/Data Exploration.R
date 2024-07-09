@@ -9,7 +9,7 @@ library(geodata); library(tidyterra); library(terra); library(viridis); library(
 # the 'read_sheet' function is actually kind of terrible for a lot of things, mostly 
 # it converts a lot of variables to lists and I don't have the patience to name every column variable. 
 # but it's down and dirty and works for some things. 
-df <- read_sheet("https://docs.google.com/spreadsheets/d/1zEkz_KKvY1ek7ejBohuy7ZazTrOwHazpraRPD6lCtZY")
+df <- read_sheet("https://docs.google.com/spreadsheets/d/10V-2mtjM0moRoU5ITHBs-579cxMPUL1nJbK2O3AIWhA")
 
 # otherwise, download ARDUOUS as .csv and put in input folder. 
 df <- read.csv("input/data.csv") %>% 
@@ -110,7 +110,6 @@ animaldf %>%
 
 table(animaldf$scientific_name)
 
-# finished letter P, anto R
 # migratory or home ranges 100+ across
 large <- c("Acrocephalus schoenobaenus", "Antilocapra americana", "Canis lupus", 
            "Cervus canadensis", "Cervus elaphus", "Cervus elaphus L.", "Ctenopharyngodon idella", 
@@ -146,7 +145,7 @@ medium <- c("Aepyceros melampus", "Alligator sinensis", "Antidorcas marsupialis"
             "Panthera leo", "Papio", "Papio anubis", "Papio ursinus", "Pecari tajacu", 
             "Phacochoerus africanus", "Phascolarctos cinereus", "Pomoxis nigromaculatus", 
             "Procyon lotor", "Propithecus coquereli", "Propithecus verreauxi", 
-            "Raphicerus campestris", "Redunca arundinum", "Castor fiber L", 
+            "Raphicerus campestris", "Redunca arundinum",  
             "Scolopacidae", "Serpentes", "Sylvicapra grimmia", "Sylvilagus", 
             "Sylvilagus cunicularius", "Tapirella bairdii", "Tapiridae", "Tapirus terrestris", 
             "Tayassu pecari", "Tayassuidae", "Tragelaphus scriptus", "Vulpes", "Vulpes vulpes", 
@@ -156,7 +155,7 @@ medium <- c("Aepyceros melampus", "Alligator sinensis", "Antidorcas marsupialis"
 # small home ranges/migration patterns, 5km^2 or less
 small <- c("Arvicola terrestris L.", "Bivalvia", "Blattodea", "Bufonidae", "Bulimulidae", 
            "Cavia", "Cavia porcellus", "Cepaea hortensis", "Cepaea nemoralis", "Chilostoma sp.",  
-           "Clausiliidae", "Corbicula sp.", "Cornu aspersum", "Cricetidae", "Cryptomys hottentotus", 
+           "Clausiliidae", "Cornu aspersum", "Cricetidae", "Cryptomys hottentotus", 
            "Ctenomys sp.", "Arvicolinae", "Eligmodontia sp.", "Eliurus majori", 
            "Eliurus minor", "Erinaceus europ.", "Fruticicolidae", "Galea sp.", "Gastropoda", 
            "Geomyidae", "Geomys bursarius", "Gerbilliscus brantsii", "Gyraulus convexiusculus", 
@@ -173,8 +172,9 @@ small <- c("Arvicola terrestris L.", "Bivalvia", "Blattodea", "Bufonidae", "Buli
            "Sigmodon hispidus", "Soricidae", "Spalax ehrenbergi", "Suncus murinus",
            "Talpa sp.", "Tatera indica", "Tenrecidae", "Thomomys talpoides", "Trichia", 
            "Trochoidea hoggarensis", "Xerotricha hoggarensis", "Xerus inauris", 
-           "Zaedyus pichiy", "Zootelcus insularis"
-)
+           "Zaedyus pichiy", "Zootelcus insularis", "Castor fiber" #	Castor fiber L, Eurasian beaver, is an aquatic species to that might affect things.
+           # several aquatic species in here actually, such as clams
+           )
 
 # Some things I'm ignoring because they're too tied with humans: Canis lupus familiaris, Rattus rattus,
 # Ovis/Capris/Ares genus (if generic and not a specific wild species), Sus
@@ -186,10 +186,14 @@ df <- df %>%
     scientific_name %in% medium ~ 'medium', 
     scientific_name %in% small ~ 'small'))
 
+animaldf <- subset(df, material_type_group %in% c("animal, other", "bone", "tooth", "otolith"))
+
 migration_list <- as.data.frame(c(large, medium, small)) %>% 
   rename(scientific_name = 'c(large, medium, small)')
 
-missing_names <- anti_join(migration_list, animaldf)
+missing_names <- anti_join(animaldf, migration_list) %>% 
+  filter(!is.na(scientific_name))
+table(missing_names$scientific_name) # little bit more work to do with new additions
 # Data Visualization ------------------------
 ------------------------------
 
@@ -247,26 +251,3 @@ dois <- dplyr::distinct(df, related_publication_id)
 refs <- dplyr::distinct(df, related_publication_citation)
 write.csv(file = 'output/dois.csv', dois) #easily save the reference dois
 write.csv(file = 'output/refs.csv', refs) #easily save the reference list
-
-# Check PACHAMAMA for Sr --------------------------------------------------
-
-test <- read_delim("input/saaid_v.2.0_2023_humans.csv", 
-        delim = ";", escape_double = FALSE, trim_ws = TRUE)
-
-test <- test %>% rename(ratio = '87Sr/86Sr') %>%
-  filter(!is.na(ratio)) %>% 
-  select(Entry, Country, Site_Name, Sample_Id, ratio, Original_Full_Reference, Link_to_source)
-
-check <- dplyr::distinct(test, Original_Full_Reference)
-write.csv(file = 'output/checkhumans.csv', check)
-
-
-plants <- read_delim("input/saaid_v.2.0_2023_plants.csv", 
-                   delim = ";", escape_double = FALSE, trim_ws = TRUE)
-
-plants <- plants %>% rename(ratio = '87Sr/86Sr') %>%
-  filter(!is.na(ratio)) %>% 
-  select(Entry, Country, Site_Name, Sample_Id, ratio, Original_Full_Reference)
-
-check <- dplyr::distinct(plants, Original_Full_Reference)
-write.csv(file = 'output/checkplants.csv', check)
