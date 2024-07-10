@@ -12,7 +12,7 @@ library(geodata); library(tidyterra); library(terra); library(viridis); library(
 df <- read_sheet("https://docs.google.com/spreadsheets/d/10V-2mtjM0moRoU5ITHBs-579cxMPUL1nJbK2O3AIWhA")
 
 # otherwise, download ARDUOUS as .csv and put in input folder. NOT CURRENT
-df <- read.csv("input/ProjectARDUOUS090724.csv") %>% 
+df <- read.csv("input/ProjectARDUOUS100724.csv") %>% 
    mutate(collection_decimal_latitude = as.numeric(collection_decimal_latitude), 
           ratio = X87Sr_86Sr)
 
@@ -110,9 +110,10 @@ animaldf %>%
 
 # migratory or home ranges 100+ across
 large <- c("Acrocephalus schoenobaenus", "Alces alces", "Antilocapra americana", 
-           "Bison", "Bison bison", "Canis lupus", 
+           "Bison", "Bison bison", "Canis lupus", "H. molitrix", "Leopardus pardalis",
            "Cervus", "Cervus canadensis", "Cervus elaphus", "Cervus elaphus L.", 
-           "Charadrius hiaticula", "Ctenopharyngodon idella", 
+           "Charadrius hiaticula", "Ctenopharyngodon idella", "Damaliscus dorcas dorcas bontebok", 
+           "Damaliscus lunatus", "Equid sp.", "Equus", "Equus sp.", "Equus cabalus",
            "Alosa sapidissima", "Calidris alpina", "Damaliscus pygargus", "Dendroica caerulescens", 
            "Elephantidae", "Esox", "Esox lucius", "Gazella subgutturosa", "Haematopus", 
            "Kobus kob", "Lota lota", "Mammuthus", "Numenius", "Numenius phaeopus", 
@@ -120,23 +121,25 @@ large <- c("Acrocephalus schoenobaenus", "Alces alces", "Antilocapra americana",
            "Pluvialis apricaria", "Puma", "Rangifer", "Rangifer tarandus", 
            "Salminus brasiliensis", "Salmo salar", "Sander lucioperca", "Sander vitreus", 
            "Setophaga caerulescens", "Syncerus caffer caffer", "Tachycineta bicolor", 
-           "Tringa totanus", "Vanellinae"
+           "Tringa totanus", "Vanellinae", "Kobus ellipsiprymnus"
 )
 
 # migratory or home ranges between 6-99 km across
 medium <- c("Aepyceros melampus", "Alligator sinensis", "Antidorcas marsupialis", "Aplodinotus grunniens",
-            "Arapaima spp",
+            "Arapaima spp", "Erethizontidae", "Erinaceinae", "Erinaceus europaeus", "Erinaceus europeus",
             "Archaeolemur", "Archaeolemur edwardsi", "Archaeolemur majori", "Arianta arbustorum", 
-            "Avahi laniger", "Babakotia radofilai", "Bos", 
+            "Avahi laniger", "Babakotia radofilai", "Bos", "Castor fiber",
             "Bos taurus", "Bos taurus L.", "Bovidae", "Caiman yacare", "Capra",
             "Capra aegagrus hircus", "Capreolus", "Capreolus capreolus", "Capreolus capreolus L.", 
             "Caprinae", "Caprini", "Castor canadensis", "Cathartidae", "Cervidae", 
             "Cercopithecus ascanius", "Cercopithecus mitis", "Cheirogaleus crossleyi", 
             "Cingulata", "Crocuta crocuta", "Cuniculus", "Cuniculus paca",
             "Cynomys", "Atherinosoma microstoma", "Brachyplatystoma rousseauxii",
-            "Cerdocyon thous", "Cyprinus carpio", "Dasypodidae sp.", "Diceros bicornis", 
+            "Cerdocyon thous", "Cyprinus carpio", "Dasypodidae sp.", "Dasyprocta punctata",
+            "Diceros bicornis", "Dasypus novemcinctus", "Didelphis", "Didelphis marsupialis",
             "Dicotyles tajacu", "Equidae", "Eulemur rubriventer", "Eulemur rufifrons", 
-            "Felis", "Hexaprotodon guldbergi", "Hippopotamus lemerlei", "Hippotragus niger", 
+            "Felis", "Hare Lepus timidus/L. europaeus P.", "Hystrix", "Ichneumia albicauda",
+            "Hexaprotodon guldbergi", "Hippopotamus amphibius", "Hippopotamus lemerlei", "Hippotragus niger", 
             "Iguanidae", "Lagomorpha", "Lama vicugna", "Lemur catta", "Leopardus sp.", 
             "Leopardus wiedii", "Lepilemur", "Lepilemur petteri", "Leporidae", "Lepus", 
             "Lepus americanus", "Lepus saxatilis", "Lomo guanicoe", "M. agilis", 
@@ -150,21 +153,22 @@ medium <- c("Aepyceros melampus", "Alligator sinensis", "Antidorcas marsupialis"
             "Raphicerus campestris", "Redunca arundinum",  
             "Scolopacidae", "Serpentes", "Sylvicapra grimmia", "Sylvilagus", 
             "Sylvilagus cunicularius", "Tapirella bairdii", "Tapiridae", "Tapirus terrestris", 
-            "Tayassu pecari", "Tayassuidae", "Tragelaphus scriptus", "Vulpes", "Vulpes vulpes", 
-            "Vulpes vulpes L."
+            "Tayassu pecari", "Tayassuidae", "Tragelaphus scriptus", "Vulpes vulpes", 
+            "Vulpes vulpes L.", "Leptus saxatilis", "Lepus sp.", "Lepus timidus", "Lepus townsendii", 
+            "Lutra lutra"
 )
-
+#	Castor fiber L, Eurasian beaver, is an aquatic species to that might affect things.
 # small home ranges/migration patterns, 5km^2 or less
-small <- c("Acomys cahirinus ", "Akodon sp.", "Anomalocardia brasiliana", "Anthozoa",
+small <- c("Acomys cahirinus", "Akodon sp.", "Anomalocardia brasiliana", "Anthozoa",
           "Anura", "Apodemus flavicollis", "Arvicola amphibius", "Arvicola terrestris", "Bivalvia", 
-          "Blattodea", "Bufo", "Bufonidae", "Bulimulidae", 
+          "Blattodea", "Bufo", "Bufonidae", "Bulimulidae", "Lemmus trimucronatus",
            "Cavia", "Cavia porcellus", "Cepaea hortensis", "Cepaea nemoralis", "Chilostoma sp.",  
            "Clausiliidae", "Corbicula sp.", "Cornu aspersum", "Cricetidae", "Crocidura", 
-          "Crocidura flavescens deltae", "Cryptomys hottentotus", 
-           "Ctenomys sp.", "Arvicolinae", "Eligmodontia sp.", "Eliurus majori", 
+          "Crocidura flavescens deltae", "Cryptomys hottentotus", "Dicrostonyx groenlandicus", "Dicrostonyx groenlandicus rubricatus",
+           "Ctenomys sp.", "Arvicolinae", "Eligmodontia sp.", "Eliurus majori", "Eliurus",
            "Eliurus minor", "Erinaceus europ.", "Fruticicolidae", "Galea sp.", "Gastropoda", 
            "Geomyidae", "Geomys bursarius", "Gerbilliscus brantsii", "Gyraulus convexiusculus", 
-           "Helix aspersa", "Helix pomatia", "Helix sp.", "Marmota xaviventris", 
+           "Helix aspersa", "Helix pomatia", "Helix sp.", "Marmota xaviventris", "Helicidae",
            "Meriones sp.", "Micaelamyus namaquensis", "Microtus arvalis/agrestis", 
            "Mollusca", "Mus", "Mus musculus", "Neocyclotus dysoni", "Nesokia indica",
            "Octodon sp.", "Ondatra zibethicus", "Orthalicus princeps", "Orthogeomys hispidus", 
@@ -177,7 +181,8 @@ small <- c("Acomys cahirinus ", "Akodon sp.", "Anomalocardia brasiliana", "Antho
            "Sigmodon hispidus", "Soricidae", "Spalax ehrenbergi", "Suncus murinus",
            "Talpa sp.", "Tatera indica", "Tenrecidae", "Thomomys talpoides", "Trichia", 
            "Trochoidea hoggarensis", "Xerotricha hoggarensis", "Xerus inauris", 
-           "Zaedyus pichiy", "Zootelcus insularis", "Castor fiber" #	Castor fiber L, Eurasian beaver, is an aquatic species to that might affect things.
+           "Zaedyus pichiy", "Zootelcus insularis", "Euglandina cylindracea", "Snail"
+         
            # several aquatic species in here actually, such as clams
            )
 
@@ -198,7 +203,7 @@ migration_list <- as.data.frame(c(large, medium, small)) %>%
 
 missing_names <- anti_join(animaldf, migration_list) %>% 
   filter(!is.na(scientific_name))
-table(missing_names$scientific_name) # little bit more work to do with new additions, On letter 'D' now
+table(missing_names$scientific_name) # little bit more work to do with new additions, On letter 'M' now
 # Data Visualization ------------------------
 
 
@@ -251,8 +256,12 @@ ggplot() +
   guides(colour = guide_legend(override.aes = list(size = 2)))
 ggsave("output/Figure1.tiff")
 # Unique References/DOIS --------------------------------------------------
-
+refs <- df %>% 
+  select(related_publication_id, related_publication_citation) %>% 
+  distinct(related_publication_citation, .keep_all = TRUE)
+refsNoDOI <- filter(refs, is.na(related_publication_id))
 dois <- dplyr::distinct(df, related_publication_id)
-refs <- dplyr::distinct(df, related_publication_citation)
+
+
 write.csv(file = 'output/dois.csv', dois) #easily save the reference dois
 write.csv(file = 'output/refs.csv', refs) #easily save the reference list
