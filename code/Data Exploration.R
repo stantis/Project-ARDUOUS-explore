@@ -121,7 +121,9 @@ large <- c("Acrocephalus schoenobaenus", "Alces alces", "Antilocapra americana",
            "Pluvialis apricaria", "Puma", "Rangifer", "Rangifer tarandus", 
            "Salminus brasiliensis", "Salmo salar", "Sander lucioperca", "Sander vitreus", 
            "Setophaga caerulescens", "Syncerus caffer caffer", "Tachycineta bicolor", 
-           "Tringa totanus", "Vanellinae", "Kobus ellipsiprymnus"
+           "Tringa totanus", "Vanellinae", "Kobus ellipsiprymnus", "M. primigenius", 
+           "Phoca groenlandica", "Pusa hispida", "R. tarandus", "Raphicerus campestris steenbok",
+           "Rhinocerotidae", "Ursus arctos"
 )
 
 # migratory or home ranges between 6-99 km across
@@ -155,7 +157,9 @@ medium <- c("Aepyceros melampus", "Alligator sinensis", "Antidorcas marsupialis"
             "Sylvilagus cunicularius", "Tapirella bairdii", "Tapiridae", "Tapirus terrestris", 
             "Tayassu pecari", "Tayassuidae", "Tragelaphus scriptus", "Vulpes vulpes", 
             "Vulpes vulpes L.", "Leptus saxatilis", "Lepus sp.", "Lepus timidus", "Lepus townsendii", 
-            "Lutra lutra"
+            "Lutra lutra", "Mazama", "Mazama sp.", "Meles meles", "Mephitis mephitis", 
+            "Microcebus rufus", "Mustela erminea", "Mustela nivalis", "Rabbit", 
+            "Struthioniformes"
 )
 #	Castor fiber L, Eurasian beaver, is an aquatic species to that might affect things.
 # small home ranges/migration patterns, 5km^2 or less
@@ -181,8 +185,14 @@ small <- c("Acomys cahirinus", "Akodon sp.", "Anomalocardia brasiliana", "Anthoz
            "Sigmodon hispidus", "Soricidae", "Spalax ehrenbergi", "Suncus murinus",
            "Talpa sp.", "Tatera indica", "Tenrecidae", "Thomomys talpoides", "Trichia", 
            "Trochoidea hoggarensis", "Xerotricha hoggarensis", "Xerus inauris", 
-           "Zaedyus pichiy", "Zootelcus insularis", "Euglandina cylindracea", "Snail"
-         
+           "Zaedyus pichiy", "Zootelcus insularis", "Euglandina cylindracea", "Snail", 
+          "Macroscelides/Elephaniuius sp. elephant shrew", "Macroscelididae", "Masticophis mentovarius", 
+          "Megalonaias nervosa", "Microfauna", "Microgale cowani", "microtus agrestis", 
+          "Microtus miurus", "Microtus oeconomus", "Microtus oeconomus macfarlani", 
+          "Microtus oeconomus operarius", "Microtus pennsylvanicus", "Microtus xanthognathus", 
+          "Mole", "Mouse, species undet.", "Muridae", "mus trimucronatus", "Myodes rutilus", 
+          "Myodes rutilus dawsoni", "Neomys fodiens", "Rodentia", "Sciurus vulgaris", 
+          "Sorex araneus", "Sorex minutus", "Talpa europeana"
            # several aquatic species in here actually, such as clams
            )
 
