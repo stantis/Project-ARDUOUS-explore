@@ -5,6 +5,7 @@
 
 library(dplyr); library(tidyr); library(ggplot2); library(forcats); library(googlesheets4); 
 library(geodata); library(tidyterra); library(terra); library(viridis); library(purrr)
+library(ggpubr)
 
 # the 'read_sheet' function is actually kind of terrible for a lot of things, mostly 
 # it converts a lot of variables to lists and I don't have the patience to name every column variable. 
@@ -196,10 +197,6 @@ small <- c("Acomys cahirinus", "Akodon sp.", "Anomalocardia brasiliana", "Anthoz
            # several aquatic species in here actually, such as clams
            )
 
-# Some things I'm ignoring because they're too tied with humans: Canis lupus familiaris, Rattus rattus,
-# Ovis/Capris/Ares genus (if generic and not a specific wild species), Sus
-# really generic families/orders are also left off (e.g., Reptilia, Rhicocerotidae)
-
 df <- df %>% 
   mutate(migration = case_when(
     scientific_name %in% large ~ 'large', 
@@ -213,13 +210,19 @@ migration_list <- as.data.frame(c(large, medium, small)) %>%
 
 missing_names <- anti_join(animaldf, migration_list) %>% 
   filter(!is.na(scientific_name))
-table(missing_names$scientific_name) # little bit more work to do with new additions, On letter 'M' now
+table(missing_names$scientific_name) # what's 'missing' at this point are species I'm ignoring for various reasons
+# Some things I'm ignoring because they're too tied with humans: Canis lupus familiaris, Rattus rattus,
+# Ovis/Capris/Ares genus (if generic and not a specific wild species), Sus
+# really generic families/orders are also left off (e.g., Reptilia, Rhicocerotidae)
+# extinct species where the ranges just aren't necessarily well known ('e.g. archaeolemurs)
+# Probably a lot of errors as I'm not a biologist but ah well. 
+
 # Data Visualization ------------------------
 
-
 df %>%
-  ggplot(aes(x = fct_infreq(material_type_group))) +
+  ggplot(aes(x = fct_infreq(material_type_group, color = material_type_group))) +
   geom_bar() +
+  scale_fill_brewer(palette = "Paired") +
   labs(x = "group") + 
   theme_classic()
 
@@ -229,11 +232,12 @@ df %>%
   #geom_density(fill = 'midnightblue', alpha = 0.6) +
   labs(x = expression(paste(""^{87},"Sr/"^86,"Sr")), 
        y = "Count") +
-  xlim(0.7, 0.85) + 
+  #xlim(0.7, 0.85) + 
   theme_classic()
+ggsave("output/FigureHistogram.png", width = 7, height = 5, units = c("in"), dpi = 300)
 
 ggplot() +
-  geom_histogram(data = df, aes(x = '87Sr/86Sr'))
+  geom_histogram(data = df, aes(x = ratio))
 # World Map ---------------------------------------------------------------
 
 w <- world(path=tempdir())
@@ -252,26 +256,60 @@ terra::plot(v, add = T, legend = F, col = (c('#50b691')), cex = 0.5)
 #north(type = 2, label = '', xy = 'bottomleft') 
 #sbar(2000, 'bottomleft', type="bar", below="km", label=c('', 500, 1000, 2000), cex = 0.8)
 
-ggplot() +
+B <- ggplot() +
   geom_spatvector(data = w, fill = 'grey90') + 
-  geom_spatvector(data = v, aes(color = material_type_group), size = 0.4) +
+  geom_spatvector(data = v, aes(color = material_type_group), size = 0.6) +
   #scale_color_viridis(option = "turbo", discrete = T) + 
   scale_colour_brewer(palette = "Paired") +
   theme_light() + 
   theme(legend.position = "bottom", 
         #panel.background = element_rect(fill = 'grey20')
         ) + 
-  labs(color = "Material Type (simplified)") + 
+  theme(legend.position = 'none') + 
   ylim(-55, 83.5) +
   guides(colour = guide_legend(override.aes = list(size = 2)))
-ggsave("output/Figure1.tiff")
+#ggsave("output/FigureGlobalMap.png", width = 7, height = 5, units = c("in"), dpi = 300)
+
+A <- df %>%
+  ggplot(aes(x = fct_infreq(material_type_group), fill = material_type_group)) +
+  geom_bar() +
+  scale_fill_brewer(palette = "Paired") +
+  labs(x = "Group", 
+       y = 'Count', 
+       fill = "Material Type (simplified)") + 
+  theme_classic()
+
+ggarrange(A, B, nrow = 2, heights = c(0.6, 1), labels = "AUTO")
+ggsave("output/FigureBarMap.png", width = 10, height = 10, units = c("in"), dpi = 300)
 # Unique References/DOIS --------------------------------------------------
 refs <- df %>% 
   select(related_publication_id, related_publication_citation) %>% 
   distinct(related_publication_citation, .keep_all = TRUE)
-refsNoDOI <- filter(refs, is.na(related_publication_id))
+refsNoDOI <- filter(refs, related_publication_id == "")
 dois <- dplyr::distinct(df, related_publication_id)
-
 
 write.csv(file = 'output/dois.csv', dois) #easily save the reference dois
 write.csv(file = 'output/refs.csv', refs) #easily save the reference list
+write.csv(file = 'output/refsNoDOI.csv', refsNoDOI)
+# also a quick count of who is the corresponding author
+count(dplyr::distinct(df, investigator_name))
+# Reference Standards -----------------------------------------------------
+refValueUnique <- df %>% 
+  distinct(related_publication_citation, .keep_all = TRUE) %>% 
+  filter(primary_reference_material %in% c('NBS-987', 'NBS 987', 'NBS987', 'SRM-987', 'SRM 987', 'SRM 987'))
+
+
+ggplot() + 
+geom_histogram(data = refValueUnique, 
+                   aes(x = reported_reference_value)
+                       ) + 
+  theme_classic()
+
+# or is a table better?
+refValueUnique <- df %>% 
+  distinct(related_publication_citation, .keep_all = TRUE) %>% 
+    filter(primary_reference_material %in% c('NBS-987', 'NBS 987', 'NBS987', 'SRM-987', 'SRM 987', 'SRM 987'))
+
+count(dplyr::distinct(refValueUnique, reported_reference_value))
+
+# or a histogram, but by uni      
