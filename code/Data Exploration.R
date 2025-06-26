@@ -3,19 +3,19 @@
 # Place downloaded .csv in folder 'input', labeled 'data.csv' for the below code to work as-is
 # Setup -------------------------------------------------------------------
 
-library(dplyr); library(tidyr); library(ggplot2); library(forcats); library(googlesheets4); 
+library(dplyr); library(tidyr); library(ggplot2); library(forcats); 
 library(geodata); library(tidyterra); library(terra); library(viridis); library(purrr)
 library(ggpubr)
 
-# the 'read_sheet' function is actually kind of terrible for a lot of things, mostly 
-# it converts a lot of variables to lists and I don't have the patience to name every column variable. 
-# but it's down and dirty and works for some things. 
-df <- read_sheet("https://docs.google.com/spreadsheets/d/10V-2mtjM0moRoU5ITHBs-579cxMPUL1nJbK2O3AIWhA")
+files = list.files(
+  path = "input/",
+  pattern = "*.csv"
+  )
 
-# otherwise, download ARDUOUS as .csv and put in input folder. NOT CURRENT
-df <- read.csv("input/ProjectARDUOUS100724.csv") %>% 
-   mutate(collection_decimal_latitude = as.numeric(collection_decimal_latitude), 
-          ratio = X87Sr_86Sr)
+df <- lapply(paste0("input/",files), read.csv)
+df <- as.data.frame(df) %>% 
+  rename(Sr_ratio = 'X87Sr_86Sr', 
+         Sr_ratio_error = 'X87Sr_86Sr_error_1SD')
 
 # let's simplify some naming schema and classifications
 df <- df %>% 
@@ -79,17 +79,19 @@ df <- df %>%
     material_type == 'organism : animal : animal tissue : antler' ~ 'animal, other', 
     material_type == 'organism : animal : animal tissue : bone' ~ 'bone', 
     material_type == 'organism : animal : animal tissue : egg : shell' ~ 'animal, other', 
-    material_type == 'organism : animal : animal tissue : excreta' ~ 'animal, other', 
+    material_type == 'organism : animal : excreta' ~ 'animal, other', 
     material_type == 'organism : animal : animal tissue : feather' ~ 'animal, other', 
     material_type == 'organism : animal : animal tissue : hair' ~ 'animal, other', 
     material_type == 'organism : animal : animal tissue : otolith' ~ 'otolith', 
     material_type == 'organism : animal : animal tissue : shell' ~ 'animal, other', 
     material_type == 'organism : animal : animal tissue : tooth' ~ 'tooth', 
-    material_type == 'organism : animal : animal tissue : tooth : dentine' ~ 'tooth', 
+    material_type == 'organism : animal : animal tissue : tooth : dentin' ~ 'tooth', 
     material_type == 'organism : animal : animal tissue : tooth : enamel' ~ 'tooth', 
     material_type == 'organism : animal : animal tissue : tusk' ~ 'tooth', 
     material_type == 'organism : animal : whole animal' ~ 'animal, other', 
-    material_type == 'organism : plant : plant tissue' ~ 'plant', 
+    material_type == 'organism : plant : plant tissue' ~ 'plant',
+    material_type == 'organism : plant : whole plant' ~'plant',
+    material_type == 'organism : plant : plant tissue : unknown' ~'plant',
     material_type == 'organism : plant : plant tissue : bark' ~ 'plant', 
     material_type == 'organism : plant : plant tissue : blade' ~ 'plant', 
     material_type == 'organism : plant : plant tissue : flowering body' ~ 'plant', 
@@ -193,7 +195,7 @@ small <- c("Acomys cahirinus", "Akodon sp.", "Anomalocardia brasiliana", "Anthoz
           "Microtus oeconomus operarius", "Microtus pennsylvanicus", "Microtus xanthognathus", 
           "Mole", "Mouse, species undet.", "Muridae", "mus trimucronatus", "Myodes rutilus", 
           "Myodes rutilus dawsoni", "Neomys fodiens", "Rodentia", "Sciurus vulgaris", 
-          "Sorex araneus", "Sorex minutus", "Talpa europeana"
+          "Sorex araneus", "Sorex minutus", "Talpa europeana", "Neotominae"
            # several aquatic species in here actually, such as clams
            )
 
@@ -212,7 +214,7 @@ missing_names <- anti_join(animaldf, migration_list) %>%
   filter(!is.na(scientific_name))
 table(missing_names$scientific_name) # what's 'missing' at this point are species I'm ignoring for various reasons
 # Some things I'm ignoring because they're too tied with humans: Canis lupus familiaris, Rattus rattus,
-# Ovis/Capris/Ares genus (if generic and not a specific wild species), Sus
+# Ovis/Capris/Ares genus (if generic and not a specific wild species), Sus, Lama
 # really generic families/orders are also left off (e.g., Reptilia, Rhicocerotidae)
 # extinct species where the ranges just aren't necessarily well known ('e.g. archaeolemurs)
 # Probably a lot of errors as I'm not a biologist but ah well. 
@@ -220,14 +222,14 @@ table(missing_names$scientific_name) # what's 'missing' at this point are specie
 # Data Visualization ------------------------
 
 df %>%
-  ggplot(aes(x = fct_infreq(material_type_group, color = material_type_group))) +
-  geom_bar() +
+  ggplot() +
+  geom_bar(aes(x = fct_infreq(material_type_group))) +
   scale_fill_brewer(palette = "Paired") +
   labs(x = "group") + 
   theme_classic()
 
 df %>%
-  ggplot(aes(x = ratio)) +
+  ggplot(aes(x = Sr_ratio)) +
   geom_histogram(binwidth = 0.001, fill = 'midnightblue') +
   #geom_density(fill = 'midnightblue', alpha = 0.6) +
   labs(x = expression(paste(""^{87},"Sr/"^86,"Sr")), 
@@ -237,8 +239,19 @@ df %>%
 ggsave("output/FigureHistogram.png", width = 7, height = 5, units = c("in"), dpi = 300)
 
 ggplot() +
-  geom_histogram(data = df, aes(x = ratio))
+  geom_histogram(data = df, aes(x = Sr_ratio))
 # World Map ---------------------------------------------------------------
+cols <- c("animal, other" = "#FB9A99", 
+           "bone" = "#FDBF6F",
+           "organic other" = "#B2DF8A",
+           "otolith" = "#6A3D9A", 
+           "plant" = "#33A02C", 
+          "rock" = "#E31A1C", 
+          "sediment" = "#A6CEE3", 
+          "soil" = "#FF7F00", 
+          "tooth" = "#FFFF99", 
+          "water" = "#1F78B4", 
+          "dry deposition" = "#CAB2D6")
 
 w <- world(path=tempdir())
 v <- vect(df, geom= c("collection_decimal_longitude", "collection_decimal_latitude"), 
@@ -248,19 +261,12 @@ crs(v) = crs(w)
 plot(w)
 plot(v, add = T)
 
-#tiff(filename = paste(i,"world10.tiff"), 
-#    width = 1402, height = 748, units = "px", pointsize = 18,
-#   compression = c("lzw"))
-terra::plot(w, col = "grey96",  ylim = c(-55 , 83.500904), axes = F)
-terra::plot(v, add = T, legend = F, col = (c('#50b691')), cex = 0.5)
-#north(type = 2, label = '', xy = 'bottomleft') 
-#sbar(2000, 'bottomleft', type="bar", below="km", label=c('', 500, 1000, 2000), cex = 0.8)
-
 B <- ggplot() +
   geom_spatvector(data = w, fill = 'grey90') + 
   geom_spatvector(data = v, aes(color = material_type_group), size = 0.6) +
   #scale_color_viridis(option = "turbo", discrete = T) + 
-  scale_colour_brewer(palette = "Paired") +
+  scale_color_manual(values = cols, 
+                     name = '') +
   theme_light() + 
   theme(legend.position = "bottom", 
         #panel.background = element_rect(fill = 'grey20')
@@ -273,14 +279,18 @@ B <- ggplot() +
 A <- df %>%
   ggplot(aes(x = fct_infreq(material_type_group), fill = material_type_group)) +
   geom_bar() +
-  scale_fill_brewer(palette = "Paired") +
+  scale_fill_manual(values = cols, 
+                     name = '') +
   labs(x = "Group", 
        y = 'Count', 
        fill = "Material Type (simplified)") + 
-  theme_classic()
+  theme_classic() + 
+ # theme(axis.text.x = element_text(angle = -20, nudge_y = -0.8, hjust = 1)) + 
+  NULL
 
 ggarrange(A, B, nrow = 2, heights = c(0.6, 1), labels = "AUTO")
 ggsave("output/FigureBarMap.png", width = 10, height = 10, units = c("in"), dpi = 300)
+
 # Unique References/DOIS --------------------------------------------------
 refs <- df %>% 
   select(related_publication_id, related_publication_citation) %>% 
@@ -293,6 +303,7 @@ write.csv(file = 'output/refs.csv', refs) #easily save the reference list
 write.csv(file = 'output/refsNoDOI.csv', refsNoDOI)
 # also a quick count of who is the corresponding author
 count(dplyr::distinct(df, investigator_name))
+
 # Reference Standards -----------------------------------------------------
 refValueUnique <- df %>% 
   distinct(related_publication_citation, .keep_all = TRUE) %>% 
@@ -311,5 +322,18 @@ refValueUnique <- df %>%
     filter(primary_reference_material %in% c('NBS-987', 'NBS 987', 'NBS987', 'SRM-987', 'SRM 987', 'SRM 987'))
 
 count(dplyr::distinct(refValueUnique, reported_reference_value))
+table(refValueUnique$reported_reference_value) #with 66 unique values, I'm realizing this is 
 
-# or a histogram, but by uni      
+
+# what countries? (WIP) ---------------------------------------------------------
+
+# What countries are represented in this dataset? 
+
+# gotta make SpatVector w into a SpatRaster first
+wRast = rast(w, nrow=20000, ncol=20000)
+wRast = rasterize(w, wRast, field = "NAME_0")
+v$country <- extract(wRast$NAME_0, v, ID = F)
+
+table(v$country)
+countriescount <- as.data.frame(v$country)
+count(dplyr::distinct(countriescount, v$country))
