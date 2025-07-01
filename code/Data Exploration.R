@@ -4,8 +4,10 @@
 # Setup -------------------------------------------------------------------
 
 library(dplyr); library(tidyr); library(ggplot2); library(forcats); 
-library(geodata); library(tidyterra); library(terra); library(viridis); library(purrr)
-library(ggpubr)
+library(geodata); library(tidyterra); library(terra); library(viridis); 
+# library(purrr) #I'm not sure I need these two- test. 
+library(ggpubr); 
+library(ggridges)
 
 files = list.files(
   path = "input/",
@@ -221,6 +223,47 @@ table(missing_names$scientific_name) # what's 'missing' at this point are specie
 
 # Data Visualization ------------------------
 
+
+# Figure 1 Histogram/Density plot(s) --------------------------------------
+cols <- c("animal, other" = "#FB9A99", 
+          "bone" = "#FDBF6F",
+          "organic other" = "#B2DF8A",
+          "otolith" = "#6A3D9A", 
+          "plant" = "#33A02C", 
+          "rock" = "#E31A1C", 
+          "sediment" = "#A6CEE3", 
+          "soil" = "#FF7F00", 
+          "tooth" = "#FFFF99", 
+          "water" = "#1F78B4", 
+          "dry deposition" = "#CAB2D6")
+
+density <- df %>%
+  mutate(material_type_group = fct_relevel(material_type_group, 
+                                           'organic other', 'dry deposition', 'sediment', 'rock', 
+                                           'animal, other', 'otolith', 'bone', 
+                                           'soil', 'tooth', 'plant', 'water')) 
+
+
+DensPlot_Sr <- ggplot() + 
+  geom_density_ridges(data = density, aes(x = Sr_ratio, y = material_type_group, fill = material_type_group)) +
+  geom_point(data = subset(density, Sr_ratio >0.9), aes(x = Sr_ratio, y = material_type_group), 
+             shape = '|', size = 3, alpha = 0.7) + 
+  scale_fill_manual(values = cols, 
+                     name = '') +
+  theme_bw(base_size = 16) +
+  theme(
+    legend.position = "none",
+    axis.title.y = element_blank(),
+    panel.spacing = unit(0.1, "lines"),
+    strip.text.x = element_text(size = 8)
+  ) +
+  labs(
+    x = expression(paste(''^87, "Sr/"^86, "Sr"))
+  ) 
+
+ggsave("output/FigureDensityRidges.pdf", width = 9, height = 6, units = c("in"), dpi = 300)
+# Figure 2 Combined count and world map -----------------------------------
+
 df %>%
   ggplot() +
   geom_bar(aes(x = fct_infreq(material_type_group))) +
@@ -238,21 +281,9 @@ df %>%
   theme_classic()
 ggsave("output/FigureHistogram.png", width = 7, height = 5, units = c("in"), dpi = 300)
 
-ggplot() +
-  geom_histogram(data = df, aes(x = Sr_ratio))
-# World Map ---------------------------------------------------------------
-cols <- c("animal, other" = "#FB9A99", 
-           "bone" = "#FDBF6F",
-           "organic other" = "#B2DF8A",
-           "otolith" = "#6A3D9A", 
-           "plant" = "#33A02C", 
-          "rock" = "#E31A1C", 
-          "sediment" = "#A6CEE3", 
-          "soil" = "#FF7F00", 
-          "tooth" = "#FFFF99", 
-          "water" = "#1F78B4", 
-          "dry deposition" = "#CAB2D6")
 
+
+# World Map ---------------------------------------------------------------
 w <- world(path=tempdir())
 v <- vect(df, geom= c("collection_decimal_longitude", "collection_decimal_latitude"), 
           crs = "")
@@ -317,23 +348,35 @@ geom_histogram(data = refValueUnique,
   theme_classic()
 
 # or is a table better?
-refValueUnique <- df %>% 
-  distinct(related_publication_citation, .keep_all = TRUE) %>% 
-    filter(primary_reference_material %in% c('NBS-987', 'NBS 987', 'NBS987', 'SRM-987', 'SRM 987', 'SRM 987'))
+SRM987 <- df %>% 
+ filter(primary_reference_material %in% c('NBS-987', 'NBS 987', 'NBS987', 'SRM-987', 'SRM 987', 'SRM987'))
 
-count(dplyr::distinct(refValueUnique, reported_reference_value))
-table(refValueUnique$reported_reference_value) #with 66 unique values, I'm realizing this is 
+count(dplyr::distinct(SRM987, reported_reference_value))
+table(SRM987$reported_reference_value) # 72 unique values wow, let's just report range
+min(SRM987$reported_reference_value, na.rm = T)
+max(SRM987$reported_reference_value, na.rm = T)
 
-
-# what countries? (WIP) ---------------------------------------------------------
+# what countries? ---------------------------------------------------------
 
 # What countries are represented in this dataset? 
 
 # gotta make SpatVector w into a SpatRaster first
-wRast = rast(w, nrow=20000, ncol=20000)
+wRast = rast(w, nrow = 20000, ncol = 20000)
 wRast = rasterize(w, wRast, field = "NAME_0")
 v$country <- extract(wRast$NAME_0, v, ID = F)
 
-table(v$country)
-countriescount <- as.data.frame(v$country)
-count(dplyr::distinct(countriescount, v$country))
+countriescount <- as.data.frame(v) %>% 
+  select(country)
+countriescount$country <- as.character(countriescount$country)
+
+count(dplyr::distinct(countriescount, country))
+
+#not necessarily going in the paper, but interesting
+countriescount %>% 
+  filter(!is.na(country)) %>% 
+  count(country) %>% 
+  mutate(country = reorder(country, n)) %>% 
+  top_n(10) %>% 
+  ggplot(aes(y = country, x = n)) +
+  geom_col(fill = "midnightblue") +
+  theme_minimal()
