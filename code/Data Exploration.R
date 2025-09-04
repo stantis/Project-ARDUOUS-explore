@@ -1,13 +1,14 @@
 # This is the code used to generate all tables and figures in the associated publication. 
-# The data can be downloaded at either IsoBank LINK or IsoArch LINK 
-# Place downloaded .csv in folder 'input', labeled 'data.csv' for the below code to work as-is
+# The data can be downloaded at either IsoArcH (https://doi.org/10.48530/isoarch.2024.002) or 
+# IsoBank (https://isobank.tacc.utexas.edu/analyses/submitted_dataset_list/, then search "ARDUOUS") 
+
+# Place downloaded .csv in folder 'input'. 
+
 # Setup -------------------------------------------------------------------
 
 library(dplyr); library(tidyr); library(ggplot2); library(forcats); 
 library(geodata); library(tidyterra); library(terra); library(viridis); 
-# library(purrr) #I'm not sure I need these two- test. 
-library(ggpubr); 
-library(ggridges)
+library(ggpubr); library(ggridges)
 
 files = list.files(
   path = "input/",
@@ -16,8 +17,8 @@ files = list.files(
 
 df <- lapply(paste0("input/",files), read.csv)
 df <- as.data.frame(df) %>% 
-  rename(Sr_ratio = 'X87Sr_86Sr', 
-         Sr_ratio_error = 'X87Sr_86Sr_error_1SD')
+  rename(Sr_ratio = 'X87Sr86Sr', 
+         Sr_ratio_error = 'X87Sr86Sr_error_1SD')
 
 # let's simplify some naming schema and classifications
 df <- df %>% 
